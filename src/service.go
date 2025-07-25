@@ -109,7 +109,8 @@ func downloadVideo(req DownloadRequest) (string, error) {
 	}
 
 	// Step 3: Prepare yt-dlp command
-	outputTemplate := filepath.Join(req.Directory, "%(title).80s.%(ext)s")
+	outputTemplate := filepath.Join(req.Directory, "%(title).80s.%(id)s.%(ext)s")
+
 	parsedURL, err := urlpkg.Parse(req.URL)
 	if err != nil {
 		return "", fmt.Errorf("invalid URL: %w", err)
@@ -117,8 +118,12 @@ func downloadVideo(req DownloadRequest) (string, error) {
 
 	args := []string{
 		"--restrict-filenames",
-		"--merge-output-format", "mp4",
+		"--merge-output-format",
+		"mp4",
 		"--no-playlist",
+		"--no-part",              // <--- avoids .part temp files
+		"--downloader",
+		"ffmpeg", // <--- force use of ffmpeg
 		"-o", outputTemplate,
 		req.URL,
 	}
@@ -179,7 +184,7 @@ func resolveRedirectFully(shortURL string) (string, error) {
 			}
 			return nil
 		},
-		Timeout: 15 * time.Second,
+		Timeout: 30 * time.Second,
 	}
 
 	req, err := http.NewRequest("GET", shortURL, nil)
