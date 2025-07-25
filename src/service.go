@@ -59,6 +59,12 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 	}(jobID, req)
 }
 
+func Home(w http.ResponseWriter, r *http.Request) {
+	resp := map[string]string{"Welcome": "File Downloader"}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
 func GetDownloadStatus(w http.ResponseWriter, r *http.Request) {
 	jobID := chi.URLParam(r, "jobID")
 	mu.Lock()
@@ -104,7 +110,7 @@ func downloadVideo(req DownloadRequest) (string, error) {
 		"--merge-output-format",
 		"mp4",
 		"--no-playlist",
-		"--no-part",              // <--- avoids .part temp files
+		"--no-part", // <--- avoids .part temp files
 		"--downloader",
 		"ffmpeg", // <--- force use of ffmpeg
 		"-o", outputTemplate,
