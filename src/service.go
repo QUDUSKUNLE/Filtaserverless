@@ -11,27 +11,9 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/go-chi/chi/v5"
-)
-
-type DownloadRequest struct {
-	URL       string `json:"url"`
-	Quality   string `json:"quality"`
-	Directory string `json:"directory"`
-}
-
-type DownloadResponse struct {
-	Filename string `json:"filename"`
-	Path     string `json:"path"`
-	Message  string `json:"message"`
-}
-
-var (
-	downloadResults = make(map[string]DownloadResponse)
-	mu              = &sync.Mutex{}
 )
 
 func HandleDownload(w http.ResponseWriter, r *http.Request) {
@@ -91,6 +73,7 @@ func GetDownloadStatus(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(result)
 }
+
 func downloadVideo(req DownloadRequest) (string, error) {
 	// Step 1: Resolve Facebook redirect if needed
 	if strings.Contains(req.URL, "facebook.com/share/r/") {
