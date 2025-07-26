@@ -1,10 +1,9 @@
-package src
+package services
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	urlpkg "net/url"
 	"os"
@@ -12,75 +11,9 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
-	"github.com/go-chi/chi/v5"
 )
 
-func HandleDownload(w http.ResponseWriter, r *http.Request) {
-	var req DownloadRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.URL == "" {
-		http.Error(w, "❌ Invalid request body. Expecting JSON with 'url'", http.StatusBadRequest)
-		return
-	}
-
-	// Generate a simple job ID
-	jobID := fmt.Sprintf("job-%d", time.Now().UnixNano())
-
-	// Immediately respond that job is accepted
-	resp := map[string]string{
-		"job_id":  jobID,
-		"message": "⏳ Download started in background",
-	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
-
-	// Background goroutine to process download
-	go func(jobID string, req DownloadRequest) {
-		log.Printf("⬇️ Starting download for job %s\n", jobID)
-
-		filePath, err := downloadVideo(req)
-		mu.Lock()
-		defer mu.Unlock()
-
-		if err != nil {
-			downloadResults[jobID] = DownloadResponse{
-				Message: fmt.Sprintf("❌ Download failed: %v", err),
-			}
-			log.Printf("❌ Job %s failed: %v\n", jobID, err)
-			return
-		}
-
-		downloadResults[jobID] = DownloadResponse{
-			Filename: filepath.Base(filePath),
-			Path:     filePath,
-			Message:  "✅ Download completed",
-		}
-		log.Printf("✅ Job %s completed. File: %s\n", jobID, filePath)
-	}(jobID, req)
-}
-
-func Home(w http.ResponseWriter, r *http.Request) {
-	resp := map[string]string{"Welcome": "File Downloader"}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
-}
-
-func GetDownloadStatus(w http.ResponseWriter, r *http.Request) {
-	jobID := chi.URLParam(r, "jobID")
-	mu.Lock()
-	result, exists := downloadResults[jobID]
-	mu.Unlock()
-
-	if !exists {
-		http.Error(w, "Job not found or still processing", http.StatusNotFound)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(result)
-}
-
-func downloadVideo(req DownloadRequest) (string, error) {
+func DownloadVideo(req DownloadRequest) (string, error) {
 	// Step 1: Resolve Facebook redirect if needed
 	if strings.Contains(req.URL, "facebook.com/share/r/") {
 		resolved, err := resolveRedirectFully(req.URL)
@@ -223,4 +156,66 @@ func diffFiles(directory string, before, after map[string]time.Time) string {
 		}
 	}
 	return ""
+}
+
+// VideoMetadata holds relevant metadata fields (customize as needed)
+type VideoMetadata struct {
+	Title       string `json:"title"`
+	Duration    int    `json:"duration"`
+	Thumbnail   string `json:"thumbnail"`
+	UploadDate  string `json:"upload_date"`
+	Uploader    string `json:"uploader"`
+	Description string `json:"description"`
+	WebpageURL  string `json:"webpage_url"`
+	FormatID    string `json:"format_id"`
+	Ext         string `json:"ext"`
+	Filesize    int64  `json:"filesize,omitempty"`
+	URL         string `json:"url"` // Direct download URL
+}
+
+// GetDirectDownloadURL retrieves both direct download link and video metadata using yt-dlp.
+func getDirectDownloadURL(rawURL string) (*VideoMetadata, error) {
+	// Resolve Facebook redirect if needed
+	if strings.Contains(rawURL, "facebook.com/share/r/") {
+		resolved, err := resolveRedirectFully(rawURL)
+		if err != nil {
+			return nil, fmt.Errorf("could not resolve Facebook share URL: %w", err)
+		}
+		rawURL = resolved
+	}
+
+	// Validate URL
+	parsedURL, err := urlpkg.Parse(rawURL)
+	if err != nil || !parsedURL.IsAbs() {
+		return nil, fmt.Errorf("invalid URL: %w", err)
+	}
+
+	// yt-dlp -f best -j --simulate [URL]
+	args := []string{"-f", "best", "-j", "--simulate", rawURL}
+	cmd := exec.Command("yt-dlp", args...)
+
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		return nil, fmt.Errorf("yt-dlp failed: %w\nDetails: %s", err, stderr.String())
+	}
+
+	var meta VideoMetadata
+	if err := json.Unmarshal(stdout.Bytes(), &meta); err != nil {
+		return nil, fmt.Errorf("failed to parse yt-dlp JSON: %w", err)
+	}
+
+	return &meta, nil
+}
+
+func formatSize(bytes int64) string {
+	return fmt.Sprintf("%.2f MB", float64(bytes)/(1024*1024))
+}
+
+func formatDuration(seconds int) string {
+	min := seconds / 60
+	sec := seconds % 60
+	return fmt.Sprintf("%d:%02d", min, sec)
 }
