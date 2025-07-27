@@ -13,7 +13,7 @@ type (
 	DownloadRequest struct {
 		URL       string `json:"url"`
 		Quality   string `json:"quality"`
-		Directory string `json:"directory"`
+		// Directory string `json:"directory"`
 	}
 	UserRequest struct {
 		Username        string `json:"username"`

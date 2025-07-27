@@ -41,7 +41,7 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 		"extension":   file.Ext,
 		"format_id":   file.FormatID,
 		"filesize":    formatSize(file.Filesize),
-		"duration":    formatDuration(file.Duration),
+		"duration":    formatDuration(int64(file.Duration)),
 		"message":     "Video link is ready",
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -51,7 +51,7 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 }
 
 func processDownloadVideo(jobID string, req DownloadRequest) (*VideoMetadata, error) {
-	log.Printf("⬇️ Starting download for job %s\n", jobID)
+	log.Printf("⬇️ Starting fetch for job %s\n", jobID)
 
 	file, err := getDirectDownloadURL(req.URL)
 	if err != nil {
@@ -72,9 +72,10 @@ func processDownloadVideo(jobID string, req DownloadRequest) (*VideoMetadata, er
 		"extension":   file.Ext,
 		"format_id":   file.FormatID,
 		"filesize":    formatSize(file.Filesize),
-		"duration":    formatDuration(file.Duration),
+		"duration":    formatDuration(int64(file.Duration)),
 		"created_at":  time.Now(),
 	}
+
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
