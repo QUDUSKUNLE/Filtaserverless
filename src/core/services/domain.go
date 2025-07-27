@@ -1,18 +1,9 @@
 package services
 
-import (
-	"sync"
-)
-
-var (
-	downloadResults = make(map[string]DownloadResponse)
-	mu              = &sync.Mutex{}
-)
-
 type (
 	DownloadRequest struct {
-		URL       string `json:"url"`
-		Quality   string `json:"quality"`
+		URL     string `json:"url"`
+		Quality string `json:"quality"`
 		// Directory string `json:"directory"`
 	}
 	UserRequest struct {

@@ -50,65 +50,29 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func processDownloadVideo(jobID string, req DownloadRequest) (*VideoMetadata, error) {
-	log.Printf("⬇️ Starting fetch for job %s\n", jobID)
-
-	file, err := getDirectDownloadURL(req.URL)
-	if err != nil {
-		log.Printf("❌ Job %s failed: %v\n", jobID, err)
-		return nil, err
-	}
-
-	job := bson.M{
-		"job_id":      jobID,
-		"url":         req.URL,
-		"directory":   file.URL,
-		"status":      "success",
-		"direct_link": file.URL,
-		"title":       file.Title,
-		"description": file.Description,
-		"thumbnail":   file.Thumbnail,
-		"webpage_url": file.WebpageURL,
-		"extension":   file.Ext,
-		"format_id":   file.FormatID,
-		"filesize":    formatSize(file.Filesize),
-		"duration":    formatDuration(int64(file.Duration)),
-		"created_at":  time.Now(),
-	}
-
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	collection := db.MongoDB.Collection("jobs")
-	if _, err := collection.InsertOne(ctx, job); err != nil {
-		log.Printf("❌ Failed to insert job %s: %v\n", jobID, err)
-		return nil, err
-	}
-
-	log.Printf("✅ Job %s completed. File saved to: %s\n", jobID, file.Title)
-	return file, nil
-}
-
 func Home(w http.ResponseWriter, r *http.Request) {
-	resp := map[string]string{"Welcome": "File Downloader"}
+	resp := map[string]string{"Welcome": "Filta Downloader"}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
 }
 
 func GetDownloadStatus(w http.ResponseWriter, r *http.Request) {
-	jobID := chi.URLParam(r, "jobID")
-	mu.Lock()
-	result, exists := downloadResults[jobID]
-	mu.Unlock()
+	jobID := r.URL.Query().Get("jobID")
+	collection := db.MongoDB.Collection("jobs")
 
-	if !exists {
-		http.Error(w, "Job not found or still processing", http.StatusNotFound)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	var job models.DownloadJob
+	err := collection.FindOne(ctx, bson.M{"job_id": jobID}).Decode(&job)
+	if err != nil {
+		http.Error(w, "Job not found", http.StatusNotFound)
 		return
 	}
 
+	// return JSON response
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(result)
+	json.NewEncoder(w).Encode(job)
 }
 
 func GetDownloadState(w http.ResponseWriter, r *http.Request) {
@@ -126,11 +90,8 @@ func GetDownloadState(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// return JSON response
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"job_id": job.JobID,
-		"status": job.Status,
-		"url":    job.URL,
-	})
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(job)
 }
 
 func SignIn(w http.ResponseWriter, r *http.Request) {
@@ -167,4 +128,43 @@ func GoogleSignin(w http.ResponseWriter, r *http.Request) {
 func Subscribe(w http.ResponseWriter, r *http.Request) {
 	// Implement subscription logic
 	json.NewEncoder(w).Encode(map[string]string{"message": "Subscription is not implemented yet"})
+}
+
+func processDownloadVideo(jobID string, req DownloadRequest) (*VideoMetadata, error) {
+	log.Printf("⬇️ Starting fetch for job %s\n", jobID)
+
+	file, err := getDirectDownloadURL(req.URL)
+	if err != nil {
+		log.Printf("❌ Job %s failed: %v\n", jobID, err)
+		return nil, err
+	}
+
+	job := bson.M{
+		"job_id":      jobID,
+		"url":         req.URL,
+		"directory":   file.URL,
+		"status":      "success",
+		"direct_link": file.URL,
+		"title":       file.Title,
+		"description": file.Description,
+		"thumbnail":   file.Thumbnail,
+		"webpage_url": file.WebpageURL,
+		"extension":   file.Ext,
+		"format_id":   file.FormatID,
+		"filesize":    formatSize(file.Filesize),
+		"duration":    formatDuration(int64(file.Duration)),
+		"created_at":  time.Now(),
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	collection := db.MongoDB.Collection("jobs")
+	if _, err := collection.InsertOne(ctx, job); err != nil {
+		log.Printf("❌ Failed to insert job %s: %v\n", jobID, err)
+		return nil, err
+	}
+
+	log.Printf("✅ Job %s completed. File saved to: %s\n", jobID, file.Title)
+	return file, nil
 }

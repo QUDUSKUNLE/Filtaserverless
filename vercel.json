@@ -8,7 +8,7 @@
   ],
   "routes": [
     { "src": "/analyse", "methods": ["POST"], "dest": "/api/analyse" },
-    { "src": "/status/(.*)", "methods": ["GET"], "dest": "/api/status/[jobID]" },
-    { "src": "/", "methods": ["GET"], "dest": "/api/index" }
+    { "src": "/status", "methods": ["GET"], "dest": "/api/status" },
+    { "src": "/", "methods": ["GET"], "dest": "/api" }
   ]
 }
