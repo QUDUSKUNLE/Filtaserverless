@@ -88,8 +88,13 @@ func formatDuration(seconds int64) string {
 	return fmt.Sprintf("%d:%02d", min, sec)
 }
 
-func writeJSONError(w http.ResponseWriter, msg string, status int) {
+
+func writeJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(map[string]string{"error": msg})
+	json.NewEncoder(w).Encode(data)
+}
+
+func writeError(w http.ResponseWriter, message string, status int) {
+	writeJSON(w, status, map[string]string{"error": message})
 }
