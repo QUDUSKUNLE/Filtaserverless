@@ -1,0 +1,5 @@
+# Ignore unnecessary stuff
+.git
+*.log
+*.md
+.env

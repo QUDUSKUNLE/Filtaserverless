@@ -15,5 +15,5 @@ func init() {
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
-	middle.CorsMiddleware(http.HandlerFunc(services.HandleDownload)).ServeHTTP(w, r)
+	middle.CorsMiddleware(http.HandlerFunc(services.Analyse)).ServeHTTP(w, r)
 }

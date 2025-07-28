@@ -4,10 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 
-	"github.com/aws/aws-lambda-go/lambda"
-	chiadapter "github.com/awslabs/aws-lambda-go-api-proxy/chi"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
@@ -16,13 +13,9 @@ import (
 	"github.com/youtubebot/src/core/services"
 )
 
-var chiLambda *chiadapter.ChiLambda
-
 func init() {
 	_ = godotenv.Load()
 	db.Connect()
-	router := setupRouter()
-	chiLambda = chiadapter.New(router)
 }
 
 func setupRouter() *chi.Mux {
@@ -34,20 +27,16 @@ func setupRouter() *chi.Mux {
 	r.Use(middleware.Recoverer)
 
 	r.Get("/", services.Home)
-	r.Post("/analyse", services.HandleDownload)
+	r.Post("/analyse", services.Analyse)
 	r.Get("/status/{jobID}", services.GetStatus)
+	r.Post("/login", services.Login)
+	r.Post("/register", services.SignUp)
+	r.Post("/subscribe", services.Subscribe)
 
 	return r
 }
 
 func main() {
-	if os.Getenv("LOCAL") == "true" {
-		startLocalServer()
-	}
-	lambda.Start(chiLambda.ProxyWithContext)
-}
-
-func startLocalServer() {
 	fmt.Println("🧪 Running locally on :9096")
 	log.Fatal(http.ListenAndServe(":9096", setupRouter()))
 }

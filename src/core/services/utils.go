@@ -2,13 +2,18 @@ package services
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	urlpkg "net/url"
 	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/youtubebot/src/adapters/db"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 func resolveRedirectFully(shortURL string) (string, error) {
@@ -41,7 +46,6 @@ func resolveRedirectFully(shortURL string) (string, error) {
 	return finalURL, nil
 }
 
-// GetDirectDownloadURL retrieves both direct download link and video metadata using yt-dlp.
 func getDirectDownloadURL(rawURL string) (*VideoMetadata, error) {
 	// Resolve Facebook redirect if needed
 	if strings.Contains(rawURL, "facebook.com/share/r/") {
@@ -78,6 +82,45 @@ func getDirectDownloadURL(rawURL string) (*VideoMetadata, error) {
 	return &meta, nil
 }
 
+func processDownloadVideo(jobID string, req DownloadRequest) (*VideoMetadata, error) {
+	log.Printf("⬇️ Starting fetch for job %s\n", jobID)
+
+	file, err := getDirectDownloadURL(req.URL)
+	if err != nil {
+		log.Printf("❌ Job %s failed: %v\n", jobID, err)
+		return nil, err
+	}
+
+	job := bson.M{
+		"job_id":      jobID,
+		"url":         req.URL,
+		"directory":   file.URL,
+		"status":      "success",
+		"direct_link": file.URL,
+		"title":       file.Title,
+		"description": file.Description,
+		"thumbnail":   file.Thumbnail,
+		"webpage_url": file.WebpageURL,
+		"extension":   file.Ext,
+		"format_id":   file.FormatID,
+		"filesize":    formatSize(file.Filesize),
+		"duration":    formatDuration(int64(file.Duration)),
+		"created_at":  time.Now(),
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	collection := db.MongoDB.Collection("jobs")
+	if _, err := collection.InsertOne(ctx, job); err != nil {
+		log.Printf("❌ Failed to insert job %s: %v\n", jobID, err)
+		return nil, err
+	}
+
+	log.Printf("✅ Job %s completed. File saved to: %s\n", jobID, file.Title)
+	return file, nil
+}
+
 func formatSize(bytes int64) string {
 	return fmt.Sprintf("%.2f MB", float64(bytes)/(1024*1024))
 }
@@ -87,7 +130,6 @@ func formatDuration(seconds int64) string {
 	sec := seconds % 60
 	return fmt.Sprintf("%d:%02d", min, sec)
 }
-
 
 func writeJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
