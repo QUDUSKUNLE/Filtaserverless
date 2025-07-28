@@ -12,6 +12,7 @@ import (
 )
 
 func GetStatus(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	jobID := r.URL.Query().Get("jobID")
 	collection := db.MongoDB.Collection("jobs")
 
@@ -24,8 +25,5 @@ func GetStatus(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Job not found", http.StatusNotFound)
 		return
 	}
-
-	// return JSON response
-	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(job)
 }

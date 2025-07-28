@@ -41,20 +41,6 @@ func resolveRedirectFully(shortURL string) (string, error) {
 	return finalURL, nil
 }
 
-// VideoMetadata holds relevant metadata fields (customize as needed)
-type VideoMetadata struct {
-	Title       string  `json:"title"`
-	Duration    float64 `json:"duration"`
-	Thumbnail   string  `json:"thumbnail"`
-	UploadDate  string  `json:"upload_date"`
-	Uploader    string  `json:"uploader"`
-	Description string  `json:"description"`
-	WebpageURL  string  `json:"webpage_url"`
-	FormatID    string  `json:"format_id"`
-	Ext         string  `json:"ext"`
-	Filesize    int64   `json:"filesize,omitempty"`
-	URL         string  `json:"url"` // Direct download URL
-}
 
 // GetDirectDownloadURL retrieves both direct download link and video metadata using yt-dlp.
 func getDirectDownloadURL(rawURL string) (*VideoMetadata, error) {

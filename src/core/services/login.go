@@ -37,6 +37,7 @@ func getJWTSecret() ([]byte, error) {
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 
 	var req UserSignIn
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -88,7 +89,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"token": tokenString,
 		"user": map[string]string{

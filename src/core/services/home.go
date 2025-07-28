@@ -6,7 +6,7 @@ import (
 )
 
 func Home(w http.ResponseWriter, r *http.Request) {
-	resp := map[string]string{"Welcome": "Filta Downloader"}
 	w.Header().Set("Content-Type", "application/json")
+	resp := map[string]string{"Welcome": "Filta Downloader"}
 	json.NewEncoder(w).Encode(resp)
 }
