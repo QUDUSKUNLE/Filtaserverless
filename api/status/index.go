@@ -14,6 +14,6 @@ func init() {
 	db.Connect()
 }
 
-func HandleDownload(w http.ResponseWriter, r *http.Request) {
-	middle.CorsMiddleware(http.HandlerFunc(services.HandleDownload)).ServeHTTP(w, r)
+func Handler(w http.ResponseWriter, r *http.Request) {
+	middle.CorsMiddleware(http.HandlerFunc(services.GetStatus)).ServeHTTP(w, r)
 }
