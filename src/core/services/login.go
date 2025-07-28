@@ -37,11 +37,9 @@ func getJWTSecret() ([]byte, error) {
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	var req UserSignIn
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid login request", http.StatusBadRequest)
+		writeJSONError(w, "Invalid login request", http.StatusBadRequest)
 		return
 	}
 
@@ -54,14 +52,14 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	var existing UserData
 	err := collection.FindOne(ctx, bson.M{"email": req.Email}).Decode(&existing)
 	if err != nil {
-		http.Error(w, "Invalid login credentials", http.StatusBadRequest)
+		writeJSONError(w, "Invalid login credentials", http.StatusBadRequest)
 		return
 	}
 
 	// Fetch user from DB and validate password...
 	err = bcrypt.CompareHashAndPassword([]byte(existing.Password), []byte(req.Password))
 	if err != nil {
-		http.Error(w, "Invalid login credentials", http.StatusBadRequest)
+		writeJSONError(w, "Invalid login credentials", http.StatusBadRequest)
 		return
 	}
 
@@ -78,17 +76,19 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	key, err := getJWTSecret()
 	if err != nil {
-		http.Error(w, "Server misconfiguration: JWT secret invalid", http.StatusInternalServerError)
+		writeJSONError(w, "Server misconfiguration: JWT secret invalid", http.StatusInternalServerError)
 		return
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString(key)
 	if err != nil {
-		http.Error(w, "Could not generate token", http.StatusInternalServerError)
+		writeJSONError(w, "Could not generate token", http.StatusInternalServerError)
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"token": tokenString,
 		"user": map[string]string{

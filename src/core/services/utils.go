@@ -41,7 +41,6 @@ func resolveRedirectFully(shortURL string) (string, error) {
 	return finalURL, nil
 }
 
-
 // GetDirectDownloadURL retrieves both direct download link and video metadata using yt-dlp.
 func getDirectDownloadURL(rawURL string) (*VideoMetadata, error) {
 	// Resolve Facebook redirect if needed
@@ -87,4 +86,10 @@ func formatDuration(seconds int64) string {
 	min := seconds / 60
 	sec := seconds % 60
 	return fmt.Sprintf("%d:%02d", min, sec)
+}
+
+func writeJSONError(w http.ResponseWriter, msg string, status int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(map[string]string{"error": msg})
 }

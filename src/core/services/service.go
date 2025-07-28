@@ -15,7 +15,7 @@ import (
 func HandleDownload(w http.ResponseWriter, r *http.Request) {
 	var req DownloadRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.URL == "" {
-		http.Error(w, "❌ Invalid request body. Expecting JSON with 'url'", http.StatusBadRequest)
+		writeJSONError(w, "❌ Invalid request body. Expecting JSON with 'url'", http.StatusBadRequest)
 		return
 	}
 	// Generate a simple job ID
@@ -23,7 +23,7 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 	// Background goroutine to process download
 	file, err := processDownloadVideo(jobID, req)
 	if err != nil {
-		http.Error(w, "❌ Failed to process video: "+err.Error(), http.StatusInternalServerError)
+		writeJSONError(w, "❌ Failed to process video: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
