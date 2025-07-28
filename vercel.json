@@ -7,8 +7,10 @@
     }
   ],
   "routes": [
-    { "src": "/analyse", "methods": ["POST"], "dest": "/api/analyse" },
+    { "src": "/", "methods": ["GET"], "dest": "/api" },
+    { "src": "/login", "methods": ["POST"], "dest": "/api/login" },
     { "src": "/status", "methods": ["GET"], "dest": "/api/status" },
-    { "src": "/", "methods": ["GET"], "dest": "/api" }
+    { "src": "/analyse", "methods": ["POST"], "dest": "/api/analyse" },
+    { "src": "/register", "methods": ["POST"], "dest": "/api/register" }
   ]
 }

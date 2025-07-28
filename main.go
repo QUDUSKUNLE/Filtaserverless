@@ -35,7 +35,7 @@ func setupRouter() *chi.Mux {
 
 	r.Get("/", services.Home)
 	r.Post("/analyse", services.HandleDownload)
-	r.Get("/status/{jobID}", services.GetDownloadStatus)
+	r.Get("/status/{jobID}", services.GetStatus)
 
 	return r
 }
