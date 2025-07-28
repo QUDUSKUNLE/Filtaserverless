@@ -16,6 +16,7 @@ import (
 )
 
 func SignUp(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	var req UserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body. Expecting JSON with 'username', 'password', 'confirmPassword', 'email', 'firstName', and 'lastName'", http.StatusBadRequest)
@@ -23,7 +24,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate input
-	if req.Username == "" || req.Password == "" || req.ConfirmPassword == "" || req.Email == "" {
+	if req.Password == "" || req.ConfirmPassword == "" || req.Email == "" {
 		http.Error(w, "All fields are required", http.StatusBadRequest)
 		return
 	}
@@ -82,12 +83,10 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 
 	// Simulate user creation
 	user := UserResponse{
-		ID:       oid.Hex(),
-		Username: req.Username,
-		Email:    req.Email,
+		ID:      oid.Hex(),
+		Message: "User sign up successfully",
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(user)
 }

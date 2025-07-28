@@ -6,15 +6,14 @@ type (
 	DownloadRequest struct {
 		URL     string `json:"url"`
 		Quality string `json:"quality"`
-		// Directory string `json:"directory"`
 	}
 	UserRequest struct {
-		Username        string `json:"username"`
+		Username        string `json:"username,omitempty"`
 		Password        string `json:"password"`
-		ConfirmPassword string `json:"confirmPassword"`
+		ConfirmPassword string `json:"confirm_password"`
 		Email           string `json:"email"`
-		FirstName       string `json:"firstName"`
-		LastName        string `json:"lastName"`
+		FirstName       string `json:"first_name"`
+		LastName        string `json:"last_name"`
 	}
 	UserData struct {
 		ID        primitive.ObjectID `bson:"id"`
@@ -25,12 +24,11 @@ type (
 		LastName  string             `bson:"lastName"`
 	}
 	UserResponse struct {
-		ID       string `json:"id"`
-		Username string `json:"username"`
-		Email    string `json:"email"`
+		ID      string `json:"id"`
+		Message string `json:"message"`
 	}
 	UserSignIn struct {
-		Email    string `json:"username"`
+		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
 	UserResetPassword struct {
