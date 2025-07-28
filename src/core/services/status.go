@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"time"
 
@@ -12,7 +11,6 @@ import (
 )
 
 func GetStatus(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
 	jobID := r.URL.Query().Get("jobID")
 	collection := db.MongoDB.Collection("jobs")
 
@@ -22,8 +20,8 @@ func GetStatus(w http.ResponseWriter, r *http.Request) {
 	var job models.DownloadJob
 	err := collection.FindOne(ctx, bson.M{"job_id": jobID}).Decode(&job)
 	if err != nil {
-		http.Error(w, "Job not found", http.StatusNotFound)
+		writeError(w, "Job not found", http.StatusNotFound)
 		return
 	}
-	json.NewEncoder(w).Encode(job)
+	writeJSON(w, http.StatusOK, job)
 }
