@@ -16,7 +16,7 @@ type (
 		LastName        string `json:"last_name"`
 	}
 	UserData struct {
-		ID        primitive.ObjectID `bson:"id"`
+		ID        primitive.ObjectID `bson:"_id,omitempty"`
 		Username  string             `bson:"username"`
 		Password  string             `bson:"password"`
 		Email     string             `bson:"email"`
