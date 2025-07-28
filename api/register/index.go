@@ -35,7 +35,7 @@ func EnsureUserIndexes() {
 
 	_, err := collection.Indexes().CreateOne(ctx, indexModel)
 	if err != nil {
-		log.Fatalf("⚠️ Failed to create unique index on email: %v", err)
+		log.Printf("⚠️ Failed to create unique index on email: %v", err)
 	} else {
 		log.Println("✅ Unique index on email ensured")
 	}

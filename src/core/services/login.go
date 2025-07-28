@@ -3,14 +3,16 @@ package services
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"os"
+	"sync"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/youtubebot/src/adapters/db"
 	"go.mongodb.org/mongo-driver/bson"
 	"golang.org/x/crypto/bcrypt"
-	"time"
 )
 
 type Claims struct {
@@ -18,9 +20,24 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
+var jwtSecret []byte
+var secretOnce sync.Once
+
+func getJWTSecret() ([]byte, error) {
+	var err error
+	secretOnce.Do(func() {
+		secret := os.Getenv("TOKEN")
+		if len(secret) < 32 {
+			err = errors.New("TOKEN is missing or too short (must be ≥32 characters)")
+			return
+		}
+		jwtSecret = []byte(secret)
+	})
+	return jwtSecret, err
+}
+
 func Login(w http.ResponseWriter, r *http.Request) {
 
-	jwtSecret := []byte(os.Getenv("TOKEN"))
 	var req UserSignIn
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid login request", http.StatusBadRequest)
@@ -58,8 +75,14 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
+	key, err := getJWTSecret()
+	if err != nil {
+		http.Error(w, "Server misconfiguration: JWT secret invalid", http.StatusInternalServerError)
+		return
+	}
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(jwtSecret)
+	tokenString, err := token.SignedString(key)
 	if err != nil {
 		http.Error(w, "Could not generate token", http.StatusInternalServerError)
 		return
