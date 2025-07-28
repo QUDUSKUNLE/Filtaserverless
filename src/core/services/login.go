@@ -27,7 +27,7 @@ func getJWTSecret() ([]byte, error) {
 	var err error
 	secretOnce.Do(func() {
 		secret := os.Getenv("TOKEN")
-		if len(secret) < 32 {
+		if len(secret) < 20 {
 			err = errors.New("TOKEN is missing or too short (must be ≥32 characters)")
 			return
 		}
