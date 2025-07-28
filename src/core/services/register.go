@@ -19,12 +19,12 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var req UserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body. Expecting JSON with 'username', 'password', 'confirmPassword', 'email', 'firstName', and 'lastName'", http.StatusBadRequest)
+		http.Error(w, "Invalid request body. Expecting JSON with 'password', 'confirm_password', 'email', 'first_name', and 'last_name'", http.StatusBadRequest)
 		return
 	}
 
 	// Validate input
-	if req.Password == "" || req.ConfirmPassword == "" || req.Email == "" {
+	if req.Password == "" || req.ConfirmPassword == "" || req.Email == "" || req.FirstName == "" || req.LastName == "" {
 		http.Error(w, "All fields are required", http.StatusBadRequest)
 		return
 	}
