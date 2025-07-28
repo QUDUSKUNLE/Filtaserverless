@@ -61,11 +61,11 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	register := bson.M{
-		"username":  req.Username,
-		"password":  string(hashedPassword),
-		"email":     req.Email,
-		"firstName": req.FirstName,
-		"lastName":  req.LastName,
+		"username":   req.Username,
+		"password":   string(hashedPassword),
+		"email":      req.Email,
+		"first_name": req.FirstName,
+		"last_name":  req.LastName,
 	}
 
 	result, err := collection.InsertOne(ctx, register)

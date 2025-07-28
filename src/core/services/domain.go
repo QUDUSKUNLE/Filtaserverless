@@ -20,8 +20,8 @@ type (
 		Username  string             `bson:"username"`
 		Password  string             `bson:"password"`
 		Email     string             `bson:"email"`
-		FirstName string             `bson:"firstName"`
-		LastName  string             `bson:"lastName"`
+		FirstName string             `bson:"first_name"`
+		LastName  string             `bson:"last_name"`
 	}
 	UserResponse struct {
 		ID      string `json:"id"`
@@ -38,5 +38,19 @@ type (
 		Filename string `json:"filename"`
 		Path     string `json:"path"`
 		Message  string `json:"message"`
+	}
+	// VideoMetadata holds relevant metadata fields (customize as needed)
+	VideoMetadata struct {
+		Title       string  `json:"title"`
+		Duration    float64 `json:"duration"`
+		Thumbnail   string  `json:"thumbnail"`
+		UploadDate  string  `json:"upload_date"`
+		Uploader    string  `json:"uploader"`
+		Description string  `json:"description"`
+		WebpageURL  string  `json:"webpage_url"`
+		FormatID    string  `json:"format_id"`
+		Ext         string  `json:"ext"`
+		Filesize    int64   `json:"filesize,omitempty"`
+		URL         string  `json:"url"` // Direct download URL
 	}
 )
