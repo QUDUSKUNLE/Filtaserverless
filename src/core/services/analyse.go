@@ -10,15 +10,21 @@ import (
 func Analyse(w http.ResponseWriter, r *http.Request) {
 	var req DownloadRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.URL == "" {
-		writeError(w, "❌ Invalid request body. Expecting JSON with 'url'", http.StatusBadRequest)
+		WriteError(w, "❌ Invalid request body. Expecting JSON with 'url'", http.StatusBadRequest)
 		return
 	}
+
+	user := GetUserID(r)
+	if user == "" {
+		WriteError(w, "Unauthorized to perform operation", http.StatusUnauthorized)
+	}
+	req.UserID = user
 	// Generate a simple job ID
 	jobID := fmt.Sprintf("job-%d", time.Now().UnixNano())
 	// Background goroutine to process download
 	file, err := processDownloadVideo(jobID, req)
 	if err != nil {
-		writeError(w, "❌ Failed to process video: "+err.Error(), http.StatusInternalServerError)
+		WriteError(w, "❌ Failed to process video: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 

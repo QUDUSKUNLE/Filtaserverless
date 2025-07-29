@@ -92,6 +92,7 @@ func processDownloadVideo(jobID string, req DownloadRequest) (*VideoMetadata, er
 	}
 
 	job := bson.M{
+		// "user_id":     req.UserID,
 		"job_id":      jobID,
 		"url":         req.URL,
 		"directory":   file.URL,
@@ -137,6 +138,14 @@ func writeJSON(w http.ResponseWriter, status int, data interface{}) {
 	json.NewEncoder(w).Encode(data)
 }
 
-func writeError(w http.ResponseWriter, message string, status int) {
+func WriteError(w http.ResponseWriter, message string, status int) {
 	writeJSON(w, status, map[string]string{"error": message})
+}
+
+// Extract userID from request context
+func GetUserID(r *http.Request) string {
+	if id, ok := r.Context().Value("ID").(string); ok {
+		return id
+	}
+	return ""
 }

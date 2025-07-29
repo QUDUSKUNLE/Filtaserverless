@@ -19,21 +19,21 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var req UserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, "Invalid request body. Expecting JSON with 'password', 'confirm_password', 'email', 'first_name', and 'last_name'", http.StatusBadRequest)
+		WriteError(w, "Invalid request body. Expecting JSON with 'password', 'confirm_password', 'email', 'first_name', and 'last_name'", http.StatusBadRequest)
 		return
 	}
 
 	// Validate input
 	if req.Password == "" || req.ConfirmPassword == "" || req.Email == "" || req.FirstName == "" || req.LastName == "" {
-		writeError(w, "All fields are required.", http.StatusBadRequest)
+		WriteError(w, "All fields are required.", http.StatusBadRequest)
 		return
 	}
 	if req.Password != req.ConfirmPassword {
-		writeError(w, "Passwords do not match", http.StatusBadRequest)
+		WriteError(w, "Passwords do not match", http.StatusBadRequest)
 		return
 	}
 	if !strings.Contains(req.Email, "@") {
-		writeError(w, "Invalid email format", http.StatusBadRequest)
+		WriteError(w, "Invalid email format", http.StatusBadRequest)
 		return
 	}
 
@@ -46,17 +46,17 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	var existing bson.M
 	err := collection.FindOne(ctx, bson.M{"email": req.Email}).Decode(&existing)
 	if err == nil {
-		writeError(w, "User already registered", http.StatusConflict)
+		WriteError(w, "User already registered", http.StatusConflict)
 		return
 	} else if err != mongo.ErrNoDocuments {
 		log.Printf("❌ Error checking existing email: %v\n", err)
-		writeError(w, "Server error", http.StatusInternalServerError)
+		WriteError(w, "Server error", http.StatusInternalServerError)
 		return
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		writeError(w, "Failed to hash password", http.StatusInternalServerError)
+		WriteError(w, "Failed to hash password", http.StatusInternalServerError)
 		return
 	}
 
@@ -77,7 +77,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	// Assert ObjectID and convert to hex string
 	oid, ok := result.InsertedID.(primitive.ObjectID)
 	if !ok {
-		writeError(w, "Failed to get inserted ID", http.StatusInternalServerError)
+		WriteError(w, "Failed to get inserted ID", http.StatusInternalServerError)
 		return
 	}
 

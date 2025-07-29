@@ -20,7 +20,7 @@ func GetStatus(w http.ResponseWriter, r *http.Request) {
 	var job models.DownloadJob
 	err := collection.FindOne(ctx, bson.M{"job_id": jobID}).Decode(&job)
 	if err != nil {
-		writeError(w, "Job not found", http.StatusNotFound)
+		WriteError(w, "Job not found", http.StatusNotFound)
 		return
 	}
 	writeJSON(w, http.StatusOK, job)

@@ -4,16 +4,16 @@ import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type (
 	DownloadRequest struct {
-		URL     string `json:"url"`
-		Quality string `json:"quality"`
+		URL    string `json:"url" validate:"required"`
+		UserID string `json:"user_id,omitempty"`
 	}
 	UserRequest struct {
 		Username        string `json:"username,omitempty"`
-		Password        string `json:"password"`
-		ConfirmPassword string `json:"confirm_password"`
-		Email           string `json:"email"`
-		FirstName       string `json:"first_name"`
-		LastName        string `json:"last_name"`
+		Password        string `json:"password" validate:"required"`
+		ConfirmPassword string `json:"confirm_password" validate:"required"`
+		Email           string `json:"email" validate:"email,required"`
+		FirstName       string `json:"first_name" validate:"required"`
+		LastName        string `json:"last_name" validate:"required"`
 	}
 	UserData struct {
 		ID        primitive.ObjectID `bson:"_id,omitempty"`
@@ -28,11 +28,11 @@ type (
 		Message string `json:"message"`
 	}
 	UserSignIn struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
+		Email    string `json:"email" validate:"email,required"`
+		Password string `json:"password" validate:"required"`
 	}
 	UserResetPassword struct {
-		Email string `json:"email"`
+		Email string `json:"email" validate:"email,required"`
 	}
 	DownloadResponse struct {
 		Filename string `json:"filename"`
