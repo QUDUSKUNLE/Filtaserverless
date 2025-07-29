@@ -14,11 +14,11 @@ func Analyse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := GetUserID(r)
-	if user == "" {
-		WriteError(w, "Unauthorized to perform operation", http.StatusUnauthorized)
-	}
-	req.UserID = user
+	// user := GetUserID(r)
+	// if user == "" {
+	// 	WriteError(w, "Unauthorized to perform operation", http.StatusUnauthorized)
+	// }
+	// req.UserID = user
 	// Generate a simple job ID
 	jobID := fmt.Sprintf("job-%d", time.Now().UnixNano())
 	// Background goroutine to process download
