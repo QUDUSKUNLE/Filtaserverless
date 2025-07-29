@@ -17,10 +17,10 @@ const UserIDKey key = "ID"
 // CORS middleware
 func CorsMiddleware(next http.Handler) http.Handler {
 	allowedOrigins := map[string]bool{
-		"http://localhost:3000":                       true,
-		"https://filta.vercel.app/":                   true,
-		"https://filta-git-main-medivue.vercel.app/":  true,
-		"https://filta-7jtd1zrn6-medivue.vercel.app/": true,
+		"http://localhost:3000":                      true,
+		"https://filta.vercel.app":                   true,
+		"https://filta-git-main-medivue.vercel.app":  true,
+		"https://filta-7jtd1zrn6-medivue.vercel.app": true,
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
