@@ -46,24 +46,63 @@ func resolveRedirectFully(shortURL string) (string, error) {
 	return finalURL, nil
 }
 
+// getDirectDownloadURL determines the platform (YouTube, Facebook, Instagram),
+// normalizes share/redirect URLs, and invokes yt-dlp to extract direct media metadata.
 func getDirectDownloadURL(rawURL string) (*VideoMetadata, error) {
-	// Resolve Facebook redirect if needed
-	if strings.Contains(rawURL, "facebook.com/share/r/") {
-		resolved, err := resolveRedirectFully(rawURL)
+	// Normalize input
+	normalized := strings.TrimSpace(rawURL)
+
+	// Facebook: resolve short share/fb.watch redirects
+	if strings.Contains(normalized, "facebook.com/share/r/") || strings.Contains(normalized, "fb.watch/") {
+		resolved, err := resolveRedirectFully(normalized)
 		if err != nil {
 			return nil, fmt.Errorf("could not resolve Facebook share URL: %w", err)
 		}
-		rawURL = resolved
+		normalized = resolved
+	}
+
+	// Instagram: strip tracking query parameters like igshid to stabilize extraction
+	if strings.Contains(normalized, "instagram.com") {
+		if u, err := urlpkg.Parse(normalized); err == nil {
+			if q := u.Query(); len(q) > 0 {
+				// remove common tracking params without risking required identifiers
+				q.Del("igshid")
+				q.Del("utm_source")
+				q.Del("utm_medium")
+				q.Del("utm_campaign")
+				u.RawQuery = q.Encode()
+			}
+			normalized = u.String()
+		}
 	}
 
 	// Validate URL
-	parsedURL, err := urlpkg.Parse(rawURL)
+	parsedURL, err := urlpkg.Parse(normalized)
 	if err != nil || !parsedURL.IsAbs() {
 		return nil, fmt.Errorf("invalid URL: %w", err)
 	}
 
-	// yt-dlp -f best -j --simulate [URL]
-	args := []string{"-f", "best", "-j", "--simulate", rawURL}
+	lowerHost := strings.ToLower(parsedURL.Hostname())
+
+	// Build yt-dlp args per provider
+	args := []string{"-j", "--simulate"}
+
+	switch {
+	case strings.Contains(lowerHost, "youtube.com") || strings.Contains(lowerHost, "youtu.be"):
+		// Prefer best video+audio merged if available, fallback to best single stream
+		args = append(args, "-f", "best[ext=mp4]/best")
+	case strings.Contains(lowerHost, "facebook.com"):
+		// Facebook can be stricter; prefer a robust single best with retries
+		args = append(args, "-f", "b", "--force-ipv4", "--retries", "3")
+	case strings.Contains(lowerHost, "instagram.com"):
+		// Instagram reels/posts
+		args = append(args, "-f", "b", "--retries", "3")
+	default:
+		// Generic fallback
+		args = append(args, "-f", "best")
+	}
+
+	args = append(args, normalized)
 	cmd := exec.Command("yt-dlp", args...)
 
 	var stdout, stderr bytes.Buffer

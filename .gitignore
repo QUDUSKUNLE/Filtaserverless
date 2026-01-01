@@ -2,3 +2,4 @@ tmp
 .env
 ffmpeg-latest.7z
 .vercel
+build-errors.log

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+	"github.com/youtubebot/src/adapters/db/models"
+	"github.com/youtubebot/src/adapters/db/repository"
 )
 
 func Analyse(w http.ResponseWriter, r *http.Request) {
@@ -26,6 +28,27 @@ func Analyse(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		WriteError(w, "❌ Failed to process video: "+err.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	job := models.DownloadJob{
+		JobID:       jobID,
+		URL:         req.URL,
+		Directory:   file.URL,
+		Status:      "success",
+		DirectLink:  file.URL,
+		Title:       file.Title,
+		Description: file.Description,
+		Thumbnail:   file.Thumbnail,
+		WebpageURL:  file.WebpageURL,
+		Extension:   file.Ext,
+		FormatID:    file.FormatID,
+		FileSize:    formatSize(file.Filesize),
+		Duration:    formatDuration(int64(file.Duration)),
+		CreatedAt:   time.Now(),
+	}
+
+	if err := repository.SaveJob(job); err != nil {
+		fmt.Printf("log.Logger: %v\n", err)
 	}
 
 	// Immediately respond that job is accepted
